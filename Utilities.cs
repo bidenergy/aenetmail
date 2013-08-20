@@ -413,11 +413,17 @@ namespace AE.Net.Mail {
 					//add the minimum necessary padding
 					if (missingPaddingLength > 2)
 						missingPaddingLength = missingPaddingLength % 2;
-					param += new string(Base64Padding, missingPaddingLength);
-					lengthWPadding += missingPaddingLength;
-					System.Diagnostics.Debug.Assert(lengthWPadding % 4 == 0);
+					
+                    param += new string(Base64Padding, missingPaddingLength);
 				}
 			}
+
+            // clean invalid padding
+		    param = param.Replace("====", "");
+
+            // update lengthWPadding
+		    lengthWPadding = param.Length;
+            System.Diagnostics.Debug.Assert(lengthWPadding % 4 == 0);
 
 			if (lengthWPadding == 0) {
 				// Base64 string should not be empty
