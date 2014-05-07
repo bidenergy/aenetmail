@@ -114,9 +114,13 @@ namespace AE.Net.Mail {
 
 					if (maxLength > 0)
 						reader.ReadToEnd(maxLength, Encoding);
-
 				} else {
-					SetBody(reader.ReadToEnd(maxLength, Encoding));
+					//	sometimes when email doesn't have a body, we get here with maxLength == 0 and we shouldn't read any further
+					string body = String.Empty;
+					if (maxLength > 0)
+						body = reader.ReadToEnd(maxLength, Encoding);
+
+					SetBody(body);
 				}
 			}
 
@@ -145,8 +149,8 @@ namespace AE.Net.Mail {
 		private static string ParseMime(Stream reader, string boundary, ref int maxLength, ICollection<Attachment> attachments, Encoding encoding, char? termChar) {
 			var maxLengthSpecified = maxLength > 0;
 			string data = null,
-				bounderInner = "--" + boundary,
-				bounderOuter = bounderInner + "--";
+					bounderInner = "--" + boundary,
+					bounderOuter = bounderInner + "--";
 			var n = 0;
 			var body = new System.Text.StringBuilder();
 			do {
@@ -178,7 +182,7 @@ namespace AE.Net.Mail {
 				var nestedboundary = a.Headers.GetBoundary();
 				if (!string.IsNullOrEmpty(nestedboundary)) {
 					ParseMime(reader, nestedboundary, ref maxLength, attachments, encoding, termChar);
-					while (!data.StartsWith(bounderInner))
+					while (!data.StartsWith(bounderInner) && !(maxLengthSpecified && maxLength == 0))
 						data = reader.ReadLine(ref maxLength, encoding, termChar);
 				} else {
 					data = reader.ReadLine(ref maxLength, a.Encoding, termChar);
@@ -214,7 +218,7 @@ namespace AE.Net.Mail {
 
 		private static readonly string[] SpecialHeaders = "Date,To,Cc,Reply-To,Bcc,Sender,From,Message-ID,Importance,Subject".Split(',');
 		public virtual void Save(System.IO.TextWriter txt) {
-			txt.WriteLine("Date: {0}", Date.GetRFC2060Date());
+			txt.WriteLine("Date: {0}", (Date == DateTime.MinValue ? DateTime.Now : Date).GetRFC2060Date());
 			txt.WriteLine("To: {0}", string.Join("; ", To.Select(x => x.ToString())));
 			txt.WriteLine("Cc: {0}", string.Join("; ", Cc.Select(x => x.ToString())));
 			txt.WriteLine("Reply-To: {0}", string.Join("; ", ReplyTo.Select(x => x.ToString())));
@@ -233,10 +237,33 @@ namespace AE.Net.Mail {
 			if (Importance != MailPriority.Normal)
 				txt.WriteLine("Importance: {0}", (int)Importance);
 			txt.WriteLine("Subject: {0}", Subject);
+
+			string boundary = null;
+			if (Attachments.Any() || AlternateViews.Any()) {
+				boundary = string.Format("--boundary_{0}", Guid.NewGuid());
+				txt.WriteLine("Content-Type: multipart/mixed; boundary={0}", boundary);
+			}
+
+			// signal end of headers
 			txt.WriteLine();
 
-			//todo: attachments
-			txt.Write(Body);
+			if (boundary != null) {
+				txt.WriteLine("--" + boundary);
+				txt.WriteLine();
+			}
+
+			txt.WriteLine(Body);
+
+			AlternateViews.Union(Attachments).ToList().ForEach(att => {
+				txt.WriteLine("--" + boundary);
+				txt.WriteLine(string.Join("\n", att.Headers.Select(h => string.Format("{0}: {1}", h.Key, h.Value))));
+				txt.WriteLine();
+				txt.WriteLine(att.Body);
+			});
+
+			if (boundary != null) {
+				txt.WriteLine("--" + boundary + "--");
+			}
 		}
 	}
 }

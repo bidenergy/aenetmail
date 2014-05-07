@@ -48,6 +48,7 @@ namespace Tests {
 		public void Select_Folder() {
 			using (var imap = GetClient<ImapClient>()) {
 				imap.SelectMailbox("Notes");
+				imap.Examine("Notes").UIDValidity.ShouldBeGreaterThan(0);
 				imap.GetMessageCount().ShouldBeInRange(1, int.MaxValue);
 			}
 		}
@@ -241,7 +242,7 @@ namespace Tests {
 
 		private IMailClient GetClient(string type, string host, int port, bool ssl, string username, string password) {
 			if ("imap".Equals(type, StringComparison.OrdinalIgnoreCase)) {
-				return new AE.Net.Mail.ImapClient(host, username, password, AE.Net.Mail.ImapClient.AuthMethods.Login, port, ssl);
+				return new AE.Net.Mail.ImapClient(host, username, password, AE.Net.Mail.AuthMethods.Login, port, ssl);
 			}
 
 			if ("pop3".Equals(type, StringComparison.OrdinalIgnoreCase)) {

@@ -69,9 +69,9 @@ namespace AE.Net.Mail {
 			return data;
 		}
 
-		internal static string ReadLine(this Stream stream, ref int maxLength, Encoding encoding, char? termChar) {
+		internal static string ReadLine(this Stream stream, ref int maxLength, Encoding encoding, char? termChar, int ReadTimeout = 10000) {
 			if (stream.CanTimeout)
-				stream.ReadTimeout = 10000;
+				stream.ReadTimeout = ReadTimeout;
 
 			var maxLengthSpecified = maxLength > 0;
 			int i;
@@ -184,6 +184,10 @@ namespace AE.Net.Mail {
 			return date.ToString("dd-MMM-yyyy hh:mm:ss zz", _enUsCulture);
 		}
 
+		internal static string GetRFC2822Date(this DateTime date) {
+			return date.ToString("ddd, d MMM yyyy HH:mm:ss zz", _enUsCulture);
+		}
+
 		internal static string QuoteString(this string value) {
 			return "\"" + value
 											.Replace("\\", "\\\\")
@@ -192,41 +196,41 @@ namespace AE.Net.Mail {
 											.Replace("\"", "\\\"") + "\"";
 		}
 
-        internal static bool StartsWithWhiteSpace(this string line) {
-            if (string.IsNullOrEmpty(line))
-                return false;
-            var chr = line[0];
-            return IsWhiteSpace(chr);
-        }
+		internal static bool StartsWithWhiteSpace(this string line) {
+			if (string.IsNullOrEmpty(line))
+				return false;
+			var chr = line[0];
+			return IsWhiteSpace(chr);
+		}
 
-        internal static bool EndsWithWhiteSpace(this string line) {
-            if (string.IsNullOrEmpty(line))
-                return false;
-            var chr = line[line.Length - 1];
-            return IsWhiteSpace(chr);
-        }
+		internal static bool EndsWithWhiteSpace(this string line) {
+			if (string.IsNullOrEmpty(line))
+				return false;
+			var chr = line[line.Length - 1];
+			return IsWhiteSpace(chr);
+		}
 
-        internal static bool IsWhiteSpace(this char chr) {
-            return chr == ' ' || chr == '\t' || chr == '\n' || chr == '\r';
-        }
+		internal static bool IsWhiteSpace(this char chr) {
+			return chr == ' ' || chr == '\t' || chr == '\n' || chr == '\r';
+		}
 
-        internal static string TrimStartOnce(this string line) {
-            var result = line;
+		internal static string TrimStartOnce(this string line) {
+			var result = line;
 
-            if (result.StartsWithWhiteSpace())
-                result = result.Substring(1, result.Length - 1);
+			if (result.StartsWithWhiteSpace())
+				result = result.Substring(1, result.Length - 1);
 
-            return result;
-        }
+			return result;
+		}
 
-        internal static string TrimEndOnce(this string line) {
-            var result = line;
+		internal static string TrimEndOnce(this string line) {
+			var result = line;
 
-            if (result.EndsWithWhiteSpace())
-                result = result.Substring(0, result.Length - 1);
+			if (result.EndsWithWhiteSpace())
+				result = result.Substring(0, result.Length - 1);
 
-            return result;
-        }
+			return result;
+		}
 
 		public static string DecodeQuotedPrintable(string value, Encoding encoding = null) {
 			if (encoding == null) {
