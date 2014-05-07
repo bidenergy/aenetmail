@@ -484,6 +484,8 @@ namespace AE.Net.Mail {
 
 		internal static MailAddress ToEmailAddress(this string input) {
 			try {
+                // clean up illegal characters
+			    input = input.Replace("\"", "");
 				return new MailAddress(input);
 			} catch (Exception) {
 				return null;
