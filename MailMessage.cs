@@ -83,16 +83,19 @@ namespace AE.Net.Mail {
 			}
 		}
 
-		public virtual void Load(Stream reader, bool headersOnly = false, int maxLength = 0, char? termChar = null) {
+		public virtual void Load(Stream reader, bool headersOnly = false, int maxLength = 0, char? termChar = null)
+		{
 			_HeadersOnly = headersOnly;
 			Headers = null;
 			Body = null;
+			if (maxLength == 0)
+				return;
 
 
 			var headers = new StringBuilder();
 			string line;
 			while ((line = reader.ReadLine(ref maxLength, _DefaultEncoding, termChar)) != null) {
-				if (line.Trim().Length == 0)
+				if (line.Length == 0)
 					if (headers.Length == 0)
 						continue;
 					else
@@ -123,6 +126,8 @@ namespace AE.Net.Mail {
 					SetBody(body);
 				}
 			}
+			else if (maxLength > 0)
+				reader.ReadToEnd(maxLength, Encoding);
 
 			if ((string.IsNullOrWhiteSpace(Body) || ContentType.StartsWith("multipart/")) && AlternateViews.Count > 0) {
 				var att = AlternateViews.GetTextView() ?? AlternateViews.GetHtmlView();
@@ -211,10 +216,18 @@ namespace AE.Net.Mail {
 			}).Sum();
 		}
 
-		public virtual void Save(System.IO.Stream stream, Encoding encoding = null) {
-			using (var str = new System.IO.StreamWriter(stream, encoding ?? System.Text.Encoding.Default))
+        public virtual void Save(System.IO.Stream stream, Encoding encoding = null)
+        {
+#if NET45
+			using (var str = new System.IO.StreamWriter(stream, encoding ?? System.Text.Encoding.Default, 8096, true)) {
 				Save(str);
-		}
+            }
+#else
+            var str = new System.IO.StreamWriter(stream, encoding ?? System.Text.Encoding.Default);
+            Save(str);
+            str.Flush();
+#endif
+        } 
 
 		private static readonly string[] SpecialHeaders = "Date,To,Cc,Reply-To,Bcc,Sender,From,Message-ID,Importance,Subject".Split(',');
 		public virtual void Save(System.IO.TextWriter txt) {
