@@ -54,38 +54,19 @@ namespace AE.Net.Mail {
 		}
 
 		public virtual MailAddress[] GetMailAddresses(string header) {
-			const int notFound = -1;
-
-			var mailAddresses = new List<MailAddress>();
-
 			var headerValue = this[header].RawValue.Trim();
 
-			var mailAddressStartIndex = 0;
-			var mailAddressEndIndex = 0;
+		    var mailAddresses = new List<MailAddress>();
 
-			while (mailAddressEndIndex < headerValue.Length) {
-				// Start searching for the next comma by skipping the previous mailAddressEndIndex
-				mailAddressEndIndex = headerValue.IndexOf(',', mailAddressEndIndex);
+		    var regexMatches = Regex.Matches(headerValue, @"([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)"); //email matches
+            foreach (var regexMatch in regexMatches)
+            {
+                var mailAddress = regexMatch.ToString().Trim().ToLower().ToEmailAddress();
+                mailAddresses.Add(mailAddress);
+            }
 
-				if (mailAddressEndIndex == notFound) {
-					mailAddressEndIndex = headerValue.Length;
-				}
 
-				var possibleMailAddress = headerValue.Substring(mailAddressStartIndex, mailAddressEndIndex - mailAddressStartIndex);
-
-				var mailAddress = possibleMailAddress.Trim().ToEmailAddress();
-
-				if (mailAddress != null) {
-					mailAddresses.Add(mailAddress);
-					mailAddressStartIndex = mailAddressEndIndex + 1;
-					mailAddressEndIndex = mailAddressStartIndex;
-				} else {
-					// Inscrease the end index by one so the search for the next comma skips beyond the previous found comma
-					mailAddressEndIndex++;
-				}
-			}
-
-			return mailAddresses.ToArray();
+			return mailAddresses.Distinct().ToArray();
 		}
 
 		public static HeaderDictionary Parse(string headers, System.Text.Encoding encoding) {
