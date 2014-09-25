@@ -58,7 +58,7 @@ namespace AE.Net.Mail {
 
 		    var mailAddresses = new List<MailAddress>();
 
-            var regexMatches = Regex.Matches(headerValue, @"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)\b"); //email matches
+            var regexMatches = Regex.Matches(headerValue, @"([\w\.\-\+]+)@([\w\.\-]+)"); //email matches
             foreach (var regexMatch in regexMatches)
             {
                 var mailAddress = regexMatch.ToString().Trim().ToLower().ToEmailAddress();
