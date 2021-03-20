@@ -1,3 +1,5 @@
+## AE.NET.Mail is no longer being maintained by the original author. Since then, we have moved on to use MIME KIT from nuget packages.
+
 #AE.Net.Mail
 A C# POP/IMAP client library
 
